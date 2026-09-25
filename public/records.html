@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Salidas - Vehículos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f9; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .summary-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #007bff; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        .btn-back { display: inline-block; background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        .btn-back:hover { background: #5a6268; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .badge-pendiente { background: #ffc107; color: #856404; }
+        .badge-descargado { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Historial de Salidas de Vehículos</h2>
+
+        <div class="summary-box" id="summary">
+            Cargando total de cantidades...
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Granja</th>
+                    <th>Cantidad</th>
+                    <th>Hora Salida</th>
+                    <th>Posible Llegada</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="recordsTableBody">
+                <tr><td colspan="6" style="text-align: center;">Cargando registros...</td></tr>
+            </tbody>
+        </table>
+
+        <a href="/" class="btn-back">⬅️ Registrar Nueva Salida</a>
+    </div>
+
+    <script>
+        async function loadRecords() {
+            try {
+                const response = await fetch('/api/records');
+                const records = await response.json();
+
+                const tbody = document.getElementById('recordsTableBody');
+                const summary = document.getElementById('summary');
+                tbody.innerHTML = '';
+
+                if (!Array.isArray(records) || records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay registros guardados aún.</td></tr>';
+                    summary.innerHTML = 'Cantidad Total Registrada: 0';
+                    return;
+                }
+
+                let totalCantidad = 0;
+
+                records.forEach(record => {
+                    const cantidadNum = Number(record.cantidad || 0);
+                    totalCantidad += cantidadNum;
+
+                    const formatFecha = (fechaStr) => {
+                        if (!fechaStr) return '';
+                        return fechaStr.replace('T', ' ');
+                    };
+
+                    const estado = record.estado || 'Pendiente';
+                    const badgeClass = estado === 'Descargado' ? 'badge-descargado' : 'badge-pendiente';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${record.placa}</strong></td>
+                        <td>${record.farm_name}</td>
+                        <td>${cantidadNum.toLocaleString('es-CO')}</td>
+                        <td>${formatFecha(record.hora_salida)}</td>
+                        <td>${formatFecha(record.posible_llegada)}</td>
+                        <td><span class="badge ${badgeClass}">${estado}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                summary.innerHTML = `Cantidad Total Registrada: <span style="color: #28a745;">${totalCantidad.toLocaleString('es-CO')}</span>`;
+
+            } catch (error) {
+                console.error('Error al cargar los registros:', error);
+                document.getElementById('recordsTableBody').innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar los datos.</td></tr>';
+            }
+        }
+
+        loadRecords();
+    </script>
+
+</body>
+</html>

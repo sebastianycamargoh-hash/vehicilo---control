@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Vehículos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f9; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .actions-bar { display: flex; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #343a40; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        .btn { padding: 10px 15px; text-decoration: none; border-radius: 6px; font-weight: bold; color: white; display: inline-block; cursor: pointer; border: none; font-size: 14px;}
+        .btn-refresh { background: #007bff; }
+        .btn-refresh:hover { background: #0056b3; }
+        .btn-txt { background: #17a2b8; }
+        .btn-txt:hover { background: #138496; }
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-decoration: none; display: inline-block; }
+        .badge-pendiente { background: #ffc107; color: #856404; }
+        .badge-descargado { background: #28a745; color: white; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .btn-delete:hover { background: #c82333; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h2>Panel de Administración (Control de Descarga)</h2>
+            <div class="actions-bar">
+                <button onclick="loadAdminRecords()" class="btn btn-refresh">🔄 Actualizar Lista</button>
+                <button onclick="exportToTxt()" class="btn btn-txt">📄 Descargar .TXT</button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Granja</th>
+                    <th>Cantidad</th>
+                    <th>Hora Salida</th>
+                    <th>Posible Llegada</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="adminTableBody">
+                <tr><td colspan="7" style="text-align: center;">Cargando panel...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let globalRecords = [];
+
+        async function loadAdminRecords() {
+            try {
+                const tbody = document.getElementById('adminTableBody');
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Actualizando registros...</td></tr>';
+
+                const response = await fetch('/api/records');
+                globalRecords = await response.json();
+                tbody.innerHTML = '';
+
+                if (!Array.isArray(globalRecords) || globalRecords.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay registros en el sistema.</td></tr>';
+                    return;
+                }
+
+                globalRecords.forEach(record => {
+                    const cantidadNum = Number(record.cantidad || 0);
+                    const estado = record.estado || 'Pendiente';
+                    const badgeClass = estado === 'Descargado' ? 'badge-descargado' : 'badge-pendiente';
+
+                    const formatFecha = (fechaStr) => {
+                        if (!fechaStr) return '';
+                        return fechaStr.replace('T', ' ');
+                    };
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${record.placa}</strong></td>
+                        <td>${record.farm_name}</td>
+                        <td>${cantidadNum.toLocaleString('es-CO')}</td>
+                        <td>${formatFecha(record.hora_salida)}</td>
+                        <td>${formatFecha(record.posible_llegada)}</td>
+                        <td>
+                            <a href="/toggle-status/${record.placa}" class="badge ${badgeClass}" title="Hacer clic para cambiar estado">
+                                ${estado} 🔄
+                            </a>
+                        </td>
+                        <td>
+                            <a href="/delete-record/${record.placa}" class="btn-delete" onclick="return confirm('¿Seguro que deseas eliminar este registro?');">Eliminar</a>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error al cargar datos del administrador.</td></tr>';
+            }
+        }
+
+        function exportToTxt() {
+            if (!globalRecords || globalRecords.length === 0) {
+                alert('No hay datos para exportar.');
+                return;
+            }
+
+            let txtContent = "========================================\r\n";
+            txtContent += "    HISTORIAL DE SALIDAS DE VEHÍCULOS   \r\n";
+            txtContent += "========================================\r\n\r\n";
+
+            globalRecords.forEach((r, index) => {
+                const cantidadNum = Number(r.cantidad || 0).toLocaleString('es-CO');
+                txtContent += `Registro #${index + 1}\r\n`;
+                txtContent += `- Placa: ${r.placa}\r\n`;
+                txtContent += `- Granja: ${r.farm_name || ''}\r\n`;
+                txtContent += `- Cantidad: ${cantidadNum}\r\n`;
+                txtContent += `- Hora Salida: ${r.hora_salida ? r.hora_salida.replace('T', ' ') : ''}\r\n`;
+                txtContent += `- Posible Llegada: ${r.posible_llegada ? r.posible_llegada.replace('T', ' ') : ''}\r\n`;
+                txtContent += `- Estado: ${r.estado || 'Pendiente'}\r\n`;
+                txtContent += "----------------------------------------\r\n";
+            });
+
+            const blob = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "historial_vehiculos.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Cargar los registros al abrir la página por primera vez
+        loadAdminRecords();
+    </script>
+
+</body>
+</html>
