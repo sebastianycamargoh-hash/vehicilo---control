@@ -15,8 +15,8 @@
         .btn-back { display: inline-block; background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; }
         .btn-back:hover { background: #5a6268; }
         .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
-        .badge-pendiente { background: #ffc107; color: #856404; }
-        .badge-descargado { background: #28a745; color: white; }
+        .badge-transito { background: #ffc107; color: #856404; }
+        .badge-planta { background: #28a745; color: white; }
     </style>
 </head>
 <body>
@@ -74,8 +74,8 @@
                         return fechaStr.replace('T', ' ');
                     };
 
-                    const estado = record.estado || 'Pendiente';
-                    const badgeClass = estado === 'Descargado' ? 'badge-descargado' : 'badge-pendiente';
+                    const estado = record.estado || 'En Tránsito a Planta';
+                    const badgeClass = estado === 'En Planta' ? 'badge-planta' : 'badge-transito';
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
