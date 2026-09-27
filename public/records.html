@@ -50,8 +50,7 @@
     <script>
         async function loadRecords() {
             try {
-                // CORREGIDO AQUÍ: Apunta a la ruta real /api/vehiculos
-                const response = await fetch('/api/vehiculos');
+                const response = await fetch('/api/records');
                 const records = await response.json();
 
                 const tbody = document.getElementById('recordsTableBody');
