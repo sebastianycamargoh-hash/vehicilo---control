@@ -5,9 +5,11 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de Supabase (Asegúrate de usar tus credenciales reales si las manejas por variables de entorno o déjalas aquí si ya las tenías configuradas)
-const SUPABASE_URL = process.env.SUPABASE_URL || 'TU_SUPABASE_URL';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'TU_SUPABASE_ANON_KEY';
+// ==========================================
+// CONFIGURA TUS CREDENCIALES REALES DE SUPABASE AQUÍ
+// ==========================================
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tu-proyecto.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'tu-clave-anon-key';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(express.json());
@@ -47,7 +49,7 @@ app.get('/api/vehiculos', async (req, res) => {
     }
 });
 
-// API: Crear un nuevo registro (CON VALIDACIÓN DE 6 CARACTERES)
+// API: Crear un nuevo registro (CON VALIDACIÓN ESTRICTA DE 6 CARACTERES)
 app.post('/api/vehiculos', async (req, res) => {
     try {
         let { placa, farm_name, cantidad, hora_salida, posible_llegada } = req.body;
