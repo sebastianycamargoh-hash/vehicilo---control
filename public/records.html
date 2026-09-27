@@ -6,7 +6,7 @@
     <title>Historial de Salidas - Vehículos</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f9; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 950px; margin: 0 auto; }
         .summary-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #2c3e50; }
         table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
@@ -15,8 +15,10 @@
         .btn-back { display: inline-block; background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; }
         .btn-back:hover { background: #5a6268; }
         .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
-        .badge-transito { background: #ffc107; color: #856404; }
-        .badge-planta { background: #28a745; color: white; }
+        .badge-ruta { background: #ffc107; color: #856404; }
+        .badge-esperando { background: #17a2b8; color: white; }
+        .badge-descargando { background: #fd7e14; color: white; }
+        .badge-finalizado { background: #28a745; color: white; }
     </style>
 </head>
 <body>
@@ -36,11 +38,12 @@
                     <th>Cantidad</th>
                     <th>Hora Salida</th>
                     <th>Posible Llegada</th>
-                    <th>Estado</th>
+                    <th>Estado en Ruta</th>
+                    <th>Proceso Descargue</th>
                 </tr>
             </thead>
             <tbody id="recordsTableBody">
-                <tr><td colspan="6" style="text-align: center;">Cargando registros...</td></tr>
+                <tr><td colspan="7" style="text-align: center;">Cargando registros...</td></tr>
             </tbody>
         </table>
 
@@ -58,7 +61,7 @@
                 tbody.innerHTML = '';
 
                 if (!Array.isArray(records) || records.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay registros guardados aún.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay registros guardados aún.</td></tr>';
                     summary.innerHTML = 'Cantidad Total Registrada: 0';
                     return;
                 }
@@ -75,7 +78,21 @@
                     };
 
                     const estado = record.estado || 'En Tránsito a Planta';
-                    const badgeClass = estado === 'En Planta' ? 'badge-planta' : 'badge-transito';
+                    const proceso = record.proceso_descargue || 'N/A';
+
+                    // Lógica visual pública solicitada
+                    let badgeEstadoClass = 'badge-ruta';
+                    let textoEstado = 'En Ruta';
+
+                    if (estado === 'En Planta') {
+                        textoEstado = 'En Planta';
+                        badgeEstadoClass = 'badge-finalizado';
+                    }
+
+                    // Badge para el proceso de descargue
+                    let badgeProcesoClass = 'badge-esperando';
+                    if (proceso === 'Descargando') badgeProcesoClass = 'badge-descargando';
+                    if (proceso === 'Finalizado') badgeProcesoClass = 'badge-finalizado';
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -84,7 +101,8 @@
                         <td>${cantidadNum.toLocaleString('es-CO')}</td>
                         <td>${formatFecha(record.hora_salida)}</td>
                         <td>${formatFecha(record.posible_llegada)}</td>
-                        <td><span class="badge ${badgeClass}">${estado}</span></td>
+                        <td><span class="badge ${badgeEstadoClass}">${textoEstado}</span></td>
+                        <td>${estado === 'En Planta' ? `<span class="badge ${badgeProcesoClass}">${proceso}</span>` : '<span style="color: #999;">-</span>'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -93,7 +111,7 @@
 
             } catch (error) {
                 console.error('Error al cargar los registros:', error);
-                document.getElementById('recordsTableBody').innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar los datos.</td></tr>';
+                document.getElementById('recordsTableBody').innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error al cargar los datos.</td></tr>';
             }
         }
 
