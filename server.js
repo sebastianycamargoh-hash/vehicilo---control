@@ -6,8 +6,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Tus credenciales originales de Supabase
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tu-proyecto.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'tu-clave-anon-key';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://hfkniskjpxcyndqorkte.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable__YttPx0O1PRPURpNHzQSbA_aZhhVIgT';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(express.json());
