@@ -62,7 +62,7 @@
                 const tbody = document.getElementById('adminTableBody');
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Actualizando registros...</td></tr>';
 
-                const response = await fetch('/api/records');
+                const response = await fetch('/api/vehiculos');
                 globalRecords = await response.json();
                 tbody.innerHTML = '';
 
