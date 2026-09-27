@@ -62,6 +62,7 @@
                 const tbody = document.getElementById('adminTableBody');
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Actualizando registros...</td></tr>';
 
+                // CORREGIDO AQUÍ: Apunta a la ruta real del servidor /api/vehiculos
                 const response = await fetch('/api/vehiculos');
                 globalRecords = await response.json();
                 tbody.innerHTML = '';
@@ -89,12 +90,10 @@
                         <td>${formatFecha(record.hora_salida)}</td>
                         <td>${formatFecha(record.posible_llegada)}</td>
                         <td>
-                            <a href="/toggle-status/${record.placa}" class="badge ${badgeClass}" title="Hacer clic para cambiar estado">
-                                ${estado} 🔄
-                            </a>
+                            <span class="badge ${badgeClass}">${estado}</span>
                         </td>
                         <td>
-                            <a href="/delete-record/${record.placa}" class="btn-delete" onclick="return confirm('¿Seguro que deseas eliminar este registro?');">Eliminar</a>
+                            <button onclick="deleteRecord('${record.id}')" class="btn-delete">Eliminar</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -106,6 +105,21 @@
             }
         }
 
+        async function deleteRecord(id) {
+            if (!confirm('¿Seguro que deseas eliminar este registro?')) return;
+            try {
+                const response = await fetch(`/api/vehiculos/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadAdminRecords();
+                } else {
+                    alert('No se pudo eliminar el registro.');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Error de conexión al eliminar.');
+            }
+        }
+
         function exportToTxt() {
             if (!globalRecords || globalRecords.length === 0) {
                 alert('No hay datos para exportar.');
@@ -113,7 +127,7 @@
             }
 
             let txtContent = "========================================\r\n";
-            txtContent += "    HISTORIAL DE SALIDAS DE VEHÍCULOS   \r\n";
+            txtContent += "    HISTORIAL DE SALIDAS DE VEHÍCULOS    \r\n";
             txtContent += "========================================\r\n\r\n";
 
             globalRecords.forEach((r, index) => {
