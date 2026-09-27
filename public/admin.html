@@ -6,22 +6,30 @@
     <title>Panel de Administración - Vehículos</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f9; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; }
+        .container { max-width: 1150px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
         .actions-bar { display: flex; gap: 10px; }
         table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
         th { background-color: #343a40; color: white; }
         tr:hover { background-color: #f1f1f1; }
-        .btn { padding: 10px 15px; text-decoration: none; border-radius: 6px; font-weight: bold; color: white; display: inline-block; cursor: pointer; border: none; font-size: 14px;}
+        .btn { padding: 8px 12px; text-decoration: none; border-radius: 6px; font-weight: bold; color: white; display: inline-block; cursor: pointer; border: none; font-size: 13px;}
         .btn-refresh { background: #007bff; }
         .btn-refresh:hover { background: #0056b3; }
         .btn-txt { background: #17a2b8; }
         .btn-txt:hover { background: #138496; }
-        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-decoration: none; display: inline-block; }
+        .badge { padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; text-decoration: none; display: inline-block; }
         .badge-transito { background: #ffc107; color: #856404; }
         .badge-planta { background: #28a745; color: white; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .proceso-links { display: flex; flex-direction: column; gap: 4px; }
+        .btn-proceso { padding: 4px 8px; font-size: 11px; border-radius: 4px; text-decoration: none; color: white; text-align: center; font-weight: bold; }
+        .p-esperando { background: #17a2b8; }
+        .p-esperando:hover { background: #117a8b; }
+        .p-descargando { background: #fd7e14; }
+        .p-descargando:hover { background: #e36209; }
+        .p-finalizado { background: #28a745; }
+        .p-finalizado:hover { background: #218838; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; }
         .btn-delete:hover { background: #c82333; }
     </style>
 </head>
@@ -29,7 +37,7 @@
 
     <div class="container">
         <div class="header">
-            <h2>Panel de Administración (Control de Descarga)</h2>
+            <h2>Panel de Administración (Control de Planta y Descargue)</h2>
             <div class="actions-bar">
                 <button onclick="loadAdminRecords()" class="btn btn-refresh">🔄 Actualizar Lista</button>
                 <button onclick="exportToTxt()" class="btn btn-txt">📄 Descargar .TXT</button>
@@ -42,9 +50,9 @@
                     <th>Placa</th>
                     <th>Granja</th>
                     <th>Cantidad</th>
-                    <th>Hora Salida</th>
-                    <th>Posible Llegada</th>
-                    <th>Estado</th>
+                    <th>Salida / Llegada</th>
+                    <th>Estado Principal</th>
+                    <th>Proceso de Descargue</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -74,6 +82,7 @@
                 globalRecords.forEach(record => {
                     const cantidadNum = Number(record.cantidad || 0);
                     const estado = record.estado || 'En Tránsito a Planta';
+                    const proceso = record.proceso_descargue || 'N/A';
                     const badgeClass = estado === 'En Planta' ? 'badge-planta' : 'badge-transito';
 
                     const formatFecha = (fechaStr) => {
@@ -81,18 +90,34 @@
                         return fechaStr.replace('T', ' ');
                     };
 
+                    // Generar controles de proceso solo si está en planta
+                    let htmlProceso = '<span style="color: #888; font-size: 12px;">Requiere estar "En Planta"</span>';
+                    if (estado === 'En Planta') {
+                        htmlProceso = `
+                            <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #333;">Actual: ${proceso}</div>
+                            <div class="proceso-links">
+                                <a href="/update-proceso/${record.placa}/Esperando Muelle" class="btn-proceso p-esperando">Esperando Muelle</a>
+                                <a href="/update-proceso/${record.placa}/Descargando" class="btn-proceso p-descargando">Descargando</a>
+                                <a href="/update-proceso/${record.placa}/Finalizado" class="btn-proceso p-finalizado">Finalizado</a>
+                            </div>
+                        `;
+                    }
+
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><strong>${record.placa}</strong></td>
                         <td>${record.farm_name}</td>
                         <td>${cantidadNum.toLocaleString('es-CO')}</td>
-                        <td>${formatFecha(record.hora_salida)}</td>
-                        <td>${formatFecha(record.posible_llegada)}</td>
+                        <td style="font-size: 12px;">
+                            Salida: ${formatFecha(record.hora_salida)}<br>
+                            Llegada: ${formatFecha(record.posible_llegada)}
+                        </td>
                         <td>
-                            <a href="/toggle-status/${record.placa}" class="badge ${badgeClass}" title="Hacer clic para cambiar estado">
+                            <a href="/toggle-status/${record.placa}" class="badge ${badgeClass}" title="Clic para cambiar entre Tránsito y Planta">
                                 ${estado} 🔄
                             </a>
                         </td>
+                        <td>${htmlProceso}</td>
                         <td>
                             <a href="/delete-record/${record.placa}" class="btn-delete" onclick="return confirm('¿Seguro que deseas eliminar este registro?');">Eliminar</a>
                         </td>
@@ -113,7 +138,7 @@
             }
 
             let txtContent = "========================================\r\n";
-            txtContent += "    HISTORIAL DE SALIDAS DE VEHÍCULOS   \r\n";
+            txtContent += "    CONTROL DE PLANTA Y DESCARGUE       \r\n";
             txtContent += "========================================\r\n\r\n";
 
             globalRecords.forEach((r, index) => {
@@ -123,8 +148,8 @@
                 txtContent += `- Granja: ${r.farm_name || ''}\r\n`;
                 txtContent += `- Cantidad: ${cantidadNum}\r\n`;
                 txtContent += `- Hora Salida: ${r.hora_salida ? r.hora_salida.replace('T', ' ') : ''}\r\n`;
-                txtContent += `- Posible Llegada: ${r.posible_llegada ? r.posible_llegada.replace('T', ' ') : ''}\r\n`;
-                txtContent += `- Estado: ${r.estado || 'En Tránsito a Planta'}\r\n`;
+                txtContent += `- Estado Principal: ${r.estado || 'En Tránsito a Planta'}\r\n`;
+                txtContent += `- Proceso Descargue: ${r.proceso_descargue || 'N/A'}\r\n`;
                 txtContent += "----------------------------------------\r\n";
             });
 
