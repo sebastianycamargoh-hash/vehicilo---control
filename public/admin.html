@@ -19,8 +19,8 @@
         .btn-txt { background: #17a2b8; }
         .btn-txt:hover { background: #138496; }
         .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-decoration: none; display: inline-block; }
-        .badge-pendiente { background: #ffc107; color: #856404; }
-        .badge-descargado { background: #28a745; color: white; }
+        .badge-transito { background: #ffc107; color: #856404; }
+        .badge-planta { background: #28a745; color: white; }
         .btn-delete { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px; }
         .btn-delete:hover { background: #c82333; }
     </style>
@@ -73,8 +73,8 @@
 
                 globalRecords.forEach(record => {
                     const cantidadNum = Number(record.cantidad || 0);
-                    const estado = record.estado || 'Pendiente';
-                    const badgeClass = estado === 'Descargado' ? 'badge-descargado' : 'badge-pendiente';
+                    const estado = record.estado || 'En Tránsito a Planta';
+                    const badgeClass = estado === 'En Planta' ? 'badge-planta' : 'badge-transito';
 
                     const formatFecha = (fechaStr) => {
                         if (!fechaStr) return '';
@@ -124,7 +124,7 @@
                 txtContent += `- Cantidad: ${cantidadNum}\r\n`;
                 txtContent += `- Hora Salida: ${r.hora_salida ? r.hora_salida.replace('T', ' ') : ''}\r\n`;
                 txtContent += `- Posible Llegada: ${r.posible_llegada ? r.posible_llegada.replace('T', ' ') : ''}\r\n`;
-                txtContent += `- Estado: ${r.estado || 'Pendiente'}\r\n`;
+                txtContent += `- Estado: ${r.estado || 'En Tránsito a Planta'}\r\n`;
                 txtContent += "----------------------------------------\r\n";
             });
 
@@ -137,7 +137,6 @@
             document.body.removeChild(link);
         }
 
-        // Cargar los registros al abrir la página por primera vez
         loadAdminRecords();
     </script>
 
