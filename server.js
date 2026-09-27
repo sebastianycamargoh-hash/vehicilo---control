@@ -5,9 +5,7 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ==========================================
-// CONFIGURA TUS CREDENCIALES REALES DE SUPABASE AQUÍ
-// ==========================================
+// Tus credenciales originales de Supabase
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tu-proyecto.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'tu-clave-anon-key';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -49,7 +47,7 @@ app.get('/api/vehiculos', async (req, res) => {
     }
 });
 
-// API: Crear un nuevo registro (CON VALIDACIÓN ESTRICTA DE 6 CARACTERES)
+// API: Crear un nuevo registro (CON VALIDACIÓN DE 6 CARACTERES Y COLUMNA ESTADO)
 app.post('/api/vehiculos', async (req, res) => {
     try {
         let { placa, farm_name, cantidad, hora_salida, posible_llegada } = req.body;
@@ -68,7 +66,7 @@ app.post('/api/vehiculos', async (req, res) => {
 
         const { data, error } = await supabase
             .from('vehiculos')
-            .insert([{ placa, farm_name, cantidad, hora_salida, posible_llegada, status: 'Pending' }]);
+            .insert([{ placa, farm_name, cantidad, hora_salida, posible_llegada, estado: 'Pendiente' }]);
 
         if (error) throw error;
         res.status(201).json({ message: 'Registro guardado exitosamente', data });
@@ -78,15 +76,15 @@ app.post('/api/vehiculos', async (req, res) => {
     }
 });
 
-// API: Actualizar estado (Pending / Downloaded)
+// API: Actualizar estado
 app.patch('/api/vehiculos/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { estado } = req.body;
 
         const { data, error } = await supabase
             .from('vehiculos')
-            .update({ status })
+            .update({ estado })
             .eq('id', id);
 
         if (error) throw error;
