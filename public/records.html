@@ -7,13 +7,18 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f9; color: #333; }
         .container { max-width: 950px; margin: 0 auto; }
+        .header-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
         .summary-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #2c3e50; }
         table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #007bff; color: white; }
         tr:hover { background-color: #f1f1f1; }
-        .btn-back { display: inline-block; background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        .footer-buttons { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .btn { padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; color: white; display: inline-block; cursor: pointer; border: none; font-size: 14px; }
+        .btn-back { background: #6c757d; }
         .btn-back:hover { background: #5a6268; }
+        .btn-refresh { background: #17a2b8; }
+        .btn-refresh:hover { background: #138496; }
         .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
         .badge-ruta { background: #ffc107; color: #856404; }
         .badge-esperando { background: #17a2b8; color: white; }
@@ -24,7 +29,10 @@
 <body>
 
     <div class="container">
-        <h2>Historial de Salidas de Vehículos</h2>
+        <div class="header-box">
+            <h2>Historial de Salidas de Vehículos</h2>
+            <button onclick="loadRecords()" class="btn btn-refresh">🔄 Actualizar Lista</button>
+        </div>
 
         <div class="summary-box" id="summary">
             Cargando total de cantidades...
@@ -47,17 +55,21 @@
             </tbody>
         </table>
 
-        <a href="/" class="btn-back">⬅️ Registrar Nueva Salida</a>
+        <div class="footer-buttons">
+            <a href="/" class="btn btn-back">⬅️ Registrar Nueva Salida</a>
+        </div>
     </div>
 
     <script>
         async function loadRecords() {
             try {
+                const tbody = document.getElementById('recordsTableBody');
+                const summary = document.getElementById('summary');
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Actualizando registros...</td></tr>';
+
                 const response = await fetch('/api/records');
                 const records = await response.json();
 
-                const tbody = document.getElementById('recordsTableBody');
-                const summary = document.getElementById('summary');
                 tbody.innerHTML = '';
 
                 if (!Array.isArray(records) || records.length === 0) {
@@ -80,7 +92,6 @@
                     const estado = record.estado || 'En Tránsito a Planta';
                     const proceso = record.proceso_descargue || 'N/A';
 
-                    // Lógica visual pública solicitada
                     let badgeEstadoClass = 'badge-ruta';
                     let textoEstado = 'En Ruta';
 
@@ -89,7 +100,6 @@
                         badgeEstadoClass = 'badge-finalizado';
                     }
 
-                    // Badge para el proceso de descargue
                     let badgeProcesoClass = 'badge-esperando';
                     if (proceso === 'Descargando') badgeProcesoClass = 'badge-descargando';
                     if (proceso === 'Finalizado') badgeProcesoClass = 'badge-finalizado';
@@ -115,6 +125,7 @@
             }
         }
 
+        // Cargar al abrir la página
         loadRecords();
     </script>
 
