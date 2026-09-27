@@ -1,4 +1,30 @@
-// Guardar registro (con mayúsculas, validación de 6 caracteres y estado inicial "En Tránsito a Planta")
+const express = require('express');
+const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+const supabaseUrl = 'https://hfkniskjpxcyndqorkte.supabase.co';
+const supabaseKey = 'sb_publishable__YttPx0O1PRPURpNHzQSbA_aZhhVIgT'; 
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/records', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'records.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 app.post('/save-record', async (req, res) => {
     let { placa, farm_name, cantidad, hora_salida, posible_llegada } = req.body;
 
@@ -6,11 +32,9 @@ app.post('/save-record', async (req, res) => {
         return res.status(400).send('La placa es obligatoria.');
     }
 
-    // Convertir todo a MAYÚSCULAS y limpiar espacios
     placa = placa.trim().toUpperCase();
     farm_name = farm_name ? farm_name.trim().toUpperCase() : '';
 
-    // Validación estricta de 6 caracteres
     if (placa.length !== 6) {
         return res.status(400).send('Error: La placa debe tener exactamente 6 caracteres.');
     }
@@ -34,7 +58,19 @@ app.post('/save-record', async (req, res) => {
     res.redirect('/records');
 });
 
-// Cambiar estado (En Tránsito a Planta <-> En Planta) desde el panel de admin
+app.get('/api/records', async (req, res) => {
+    const { data, error } = await supabase
+        .from('vehiculos')
+        .select('*')
+        .order('hora_salida', { ascending: false });
+
+    if (error) {
+        return res.status(500).json({ error: error.message });
+    }
+
+    res.json(data);
+});
+
 app.get('/toggle-status/:placa', async (req, res) => {
     const { placa } = req.params;
 
@@ -49,7 +85,6 @@ app.get('/toggle-status/:placa', async (req, res) => {
         return res.redirect('/admin');
     }
 
-    // Alternar entre los nuevos estados
     const nuevoEstado = data.estado === 'En Planta' ? 'En Tránsito a Planta' : 'En Planta';
 
     const { error: updateError } = await supabase
@@ -62,4 +97,23 @@ app.get('/toggle-status/:placa', async (req, res) => {
     }
 
     res.redirect('/admin');
+});
+
+app.get('/delete-record/:placa', async (req, res) => {
+    const { placa } = req.params;
+
+    const { error } = await supabase
+        .from('vehiculos')
+        .delete()
+        .eq('placa', placa);
+
+    if (error) {
+        console.error('Error al borrar:', error);
+    }
+
+    res.redirect('/admin');
+});
+
+app.listen(port, () => {
+    console.log(`Servidor de vehículos corriendo en puerto ${port}`);
 });
