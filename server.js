@@ -25,7 +25,7 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Guardar registro (estado inicial: En Tránsito a Planta, proceso inicial: N/A o vacío)
+// Guardar registro (crea una nueva fila con ID autoincrementable)
 app.post('/save-record', async (req, res) => {
     let { placa, farm_name, cantidad, hora_salida, posible_llegada } = req.body;
 
@@ -49,7 +49,7 @@ app.post('/save-record', async (req, res) => {
             hora_salida, 
             posible_llegada, 
             estado: 'En Tránsito a Planta',
-            proceso_descargue: 'N/A' // Inicia sin proceso en planta
+            proceso_descargue: 'N/A' 
         }]);
 
     if (error) {
@@ -73,14 +73,14 @@ app.get('/api/records', async (req, res) => {
     res.json(data);
 });
 
-// Cambiar estado principal (En Tránsito a Planta <-> En Planta)
-app.get('/toggle-status/:placa', async (req, res) => {
-    const { placa } = req.params;
+// Cambiar estado principal usando el ID único del registro
+app.get('/toggle-status/:id', async (req, res) => {
+    const { id } = req.params;
 
     const { data, error: fetchError } = await supabase
         .from('vehiculos')
         .select('estado')
-        .eq('placa', placa)
+        .eq('id', id)
         .single();
 
     if (fetchError) {
@@ -90,13 +90,12 @@ app.get('/toggle-status/:placa', async (req, res) => {
 
     const pasaAPlanta = data.estado !== 'En Planta';
     const nuevoEstado = pasaAPlanta ? 'En Planta' : 'En Tránsito a Planta';
-    // Si pasa a planta, por defecto arranca en 'Esperando Muelle'. Si sale de planta, vuelve a 'N/A'.
     const nuevoProceso = pasaAPlanta ? 'Esperando Muelle' : 'N/A';
 
     const { error: updateError } = await supabase
         .from('vehiculos')
         .update({ estado: nuevoEstado, proceso_descargue: nuevoProceso })
-        .eq('placa', placa);
+        .eq('id', id);
 
     if (updateError) {
         console.error('Error al actualizar estado:', updateError);
@@ -105,15 +104,15 @@ app.get('/toggle-status/:placa', async (req, res) => {
     res.redirect('/admin');
 });
 
-// Cambiar exclusivamente el Proceso de Descargue desde el Admin
-app.get('/update-proceso/:placa/:proceso', async (req, res) => {
-    const { placa, proceso } = req.params;
+// Cambiar Proceso de Descargue usando el ID único
+app.get('/update-proceso/:id/:proceso', async (req, res) => {
+    const { id, proceso } = req.params;
     let procesoReal = decodeURIComponent(proceso);
 
     const { error } = await supabase
         .from('vehiculos')
         .update({ proceso_descargue: procesoReal })
-        .eq('placa', placa);
+        .eq('id', id);
 
     if (error) {
         console.error('Error al actualizar proceso de descargue:', error);
@@ -122,13 +121,14 @@ app.get('/update-proceso/:placa/:proceso', async (req, res) => {
     res.redirect('/admin');
 });
 
-app.get('/delete-record/:placa', async (req, res) => {
-    const { placa } = req.params;
+// Eliminar viaje especifico por su ID único
+app.get('/delete-record/:id', async (req, res) => {
+    const { id } = req.params;
 
     const { error } = await supabase
         .from('vehiculos')
         .delete()
-        .eq('placa', placa);
+        .eq('id', id);
 
     if (error) {
         console.error('Error al borrar:', error);
