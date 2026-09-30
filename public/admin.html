@@ -90,15 +90,14 @@
                         return fechaStr.replace('T', ' ');
                     };
 
-                    // Generar controles de proceso solo si está en planta
                     let htmlProceso = '<span style="color: #888; font-size: 12px;">Requiere estar "En Planta"</span>';
                     if (estado === 'En Planta') {
                         htmlProceso = `
                             <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #333;">Actual: ${proceso}</div>
                             <div class="proceso-links">
-                                <a href="/update-proceso/${record.placa}/Esperando Muelle" class="btn-proceso p-esperando">Esperando Muelle</a>
-                                <a href="/update-proceso/${record.placa}/Descargando" class="btn-proceso p-descargando">Descargando</a>
-                                <a href="/update-proceso/${record.placa}/Finalizado" class="btn-proceso p-finalizado">Finalizado</a>
+                                <a href="/update-proceso/${record.id}/Esperando Muelle" class="btn-proceso p-esperando">Esperando Muelle</a>
+                                <a href="/update-proceso/${record.id}/Descargando" class="btn-proceso p-descargando">Descargando</a>
+                                <a href="/update-proceso/${record.id}/Finalizado" class="btn-proceso p-finalizado">Finalizado</a>
                             </div>
                         `;
                     }
@@ -113,13 +112,13 @@
                             Llegada: ${formatFecha(record.posible_llegada)}
                         </td>
                         <td>
-                            <a href="/toggle-status/${record.placa}" class="badge ${badgeClass}" title="Clic para cambiar entre Tránsito y Planta">
+                            <a href="/toggle-status/${record.id}" class="badge ${badgeClass}" title="Clic para cambiar entre Tránsito y Planta">
                                 ${estado} 🔄
                             </a>
                         </td>
                         <td>${htmlProceso}</td>
                         <td>
-                            <a href="/delete-record/${record.placa}" class="btn-delete" onclick="return confirm('¿Seguro que deseas eliminar este registro?');">Eliminar</a>
+                            <a href="/delete-record/${record.id}" class="btn-delete" onclick="return confirm('¿Seguro que deseas eliminar este registro?');">Eliminar</a>
                         </td>
                     `;
                     tbody.appendChild(tr);
